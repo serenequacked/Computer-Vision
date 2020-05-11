@@ -1,0 +1,95 @@
+//2.1 Contrast Stretching 
+Pc = imread(‘mrt-train.jpg’); 
+whos Pc 
+P = rgb2gray(Pc); 
+min(P(:)), max(P(:)) 
+imshow(P)
+P2 = imsubtact(P(:,:),13);
+P2 = immultiply(P2, 255/(204-13));
+max(P2(:))
+min(P2(:))
+imshow(P2)
+
+//2.2 Histogram Equalization 
+imhist(P,10); 
+imhist(P,256);
+
+P3 = histeq(P,255); 
+
+imhist(P3,10);
+imhist(P3,256);
+
+//2.3 Linear Spatial Filtering 
+f1 = fspecial(‘gaussian’, [5 5], 1);
+ratio = 1/sum(f1, 'all');
+f1 = immultiply(f1(:,:),ratio);
+mesh(f1)
+
+f2 = fspecial(‘gaussian’, [5 5], 2);
+ratio = 1/sum(f1, 'all')	;
+f2 = immultiply(f2(:,:),ratio);
+mesh(f2)
+
+P = imread('ntugn.jpg');
+y1=conv2(P,f1);
+y2=conv2(P,f2);
+imshow(uint8((y1)))
+imshow(uint8((y2)))
+Q = imread('ntusp.jpg');
+y3 = conv2(Q,f1);
+y4 = conv2(Q,f2);
+
+//2.4 Median Filtering 
+
+P = imread('ntugn.jpg');
+P1 = medfilt2(P);
+P2 = medfilt2(P, [5 5]);
+imshow(P1)
+imshow(P2)
+
+Q = imread('ntusp.jpg');
+Q1 = medfilt2(Q);
+Q2 = medfilt2(Q);
+imshow(Q1)
+imshow(Q2)
+
+//2.5 Suppressing Noise Interference Patterns 
+R = imread('pckint.jpg');
+filt = fft2(R);
+S = abs(filt);
+imagesc(fftshift(S.^0.1));
+
+imagesc((S.^0.1));
+filt(239:241, 7:11) = 0; 
+filt(1:3, 1:3) = 0; 
+filt(254:256, 1:3) = 0; 
+filt(247:251,15:19) =0; 
+filt(254:256, 254:256) =0;
+
+
+//2.6 Undoing Perspective Distortion of Planar Surface 
+P = imread('book.jpg')
+[X Y] = ginput(4)
+
+Xim = [0; 0; 210; 210];
+Yim = [297; 0; 0; 297];
+
+A = [
+[X(1), Y(1), 1,0,0,0, -Xim(1)*X(1), -Xim(1)*Y(1)];
+[0,0,0,X(1),Y(1),1,-Yim(1)*X(1), -Yim(1)*Y(1)];
+[X(2), Y(2), 1,0,0,0, -Xim(2)*X(2), -Xim(2)*Y(2)];
+[0,0,0,X(2),Y(2),1,-Yim(2)*X(2), -Yim(2)*Y(2)];
+[X(3), Y(3), 1,0,0,0, -Xim(3)*X(3), -Xim(3)*Y(3)];
+[0,0,0,X(3),Y(3),1,-Yim(3)*X(3), -Yim(3)*Y(3)];
+[X(4), Y(4), 1,0,0,0, -Xim(4)*X(4), -Xim(4)*Y(4)];
+[0,0,0,X(4),Y(4),1,-Yim(4)*X(4), -Yim(4)*Y(4)];];
+v = [Xim(1); Yim(1); Xim(2); Yim(2);Xim(3); Yim(3); Xim(4); Yim(4);];
+
+u = A\v;
+U = reshape([u;1], 3, 3)'; 
+w = U*[X'; Y'; ones(1,4)];
+w = w ./ (ones(3,1) * w(3,:)) 
+
+T = maketform('projective', U');
+P2 = imtransform(P, T, 'XData', [0 210], 'YData', [0 297]);
+imshow(P2)
